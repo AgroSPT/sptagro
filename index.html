@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPTagro — Recomandări de fertilizare bazate pe analiza solului</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5F0;
+    --paper-warm:#F0ECE3;
+    --ink:#1C1E1A;
+    --ink-soft:#4A4D47;
+    --soil-green:#4A6B4E;
+    --soil-green-dark:#34492F;
+    --clay:#B5602E;
+    --clay-soft:#E8D9CC;
+    --data-blue:#5C6B73;
+    --line:#D9D3C5;
+    --optimal:#3D7A4A;
+    --deficit:#B5602E;
+    --excess:#A23E3E;
+    --shadow: 0 2px 12px rgba(28,30,26,0.06);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-0.01em;}
+
+  /* === Texture: faint grid like lab paper === */
+  .grid-texture{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity:0.35;
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+
+  a{color:inherit;text-decoration:none;}
+  .container{max-width:1140px;margin:0 auto;padding:0 32px;}
+
+  /* === NAV === */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(247,245,240,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .container{
+    display:flex;align-items:center;justify-content:space-between;
+    height:72px;
+  }
+  .logo{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Fraunces',serif;font-weight:700;font-size:22px;
+  }
+  .logo .mark{
+    width:30px;height:30px;border-radius:6px;
+    background:var(--soil-green);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--paper);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  }
+  .nav-links{display:flex;gap:36px;font-size:15px;font-weight:500;color:var(--ink-soft);}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{
+    background:var(--soil-green);color:var(--paper);
+    padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;
+    transition:background 0.2s;
+  }
+  .nav-cta:hover{background:var(--soil-green-dark);}
+
+  /* === HERO === */
+  .hero{
+    position:relative;
+    padding:96px 0 80px;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .hero .container{position:relative;z-index:2;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--soil-green-dark);
+    display:flex;align-items:center;gap:10px;margin-bottom:24px;
+  }
+  .eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--clay);}
+  .hero-grid{
+    display:grid;grid-template-columns:1.15fr 0.85fr;gap:64px;align-items:start;
+  }
+  .hero h1{
+    font-size:54px;line-height:1.05;letter-spacing:-0.02em;
+    margin-bottom:24px;
+  }
+  .hero h1 em{font-style:italic;color:var(--soil-green-dark);}
+  .hero p.lead{
+    font-size:18px;color:var(--ink-soft);max-width:480px;margin-bottom:32px;
+  }
+  .hero-actions{display:flex;gap:16px;align-items:center;}
+  .btn-primary{
+    background:var(--ink);color:var(--paper);
+    padding:14px 26px;border-radius:6px;font-weight:600;font-size:15px;
+    border:none;cursor:pointer;transition:transform 0.15s, background 0.2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary:hover{background:var(--soil-green-dark);transform:translateY(-1px);}
+  .btn-secondary{
+    color:var(--ink);font-weight:600;font-size:15px;
+    border-bottom:1px solid var(--ink);padding-bottom:2px;
+  }
+
+  /* Hero side: mini sample bulletin */
+  .sample-card{
+    background:var(--paper-warm);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:24px;
+    box-shadow:var(--shadow);
+  }
+  .sample-card .label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:14px;
+    display:flex;justify-content:space-between;
+  }
+  .sample-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px dashed var(--line);
+    font-size:14px;
+  }
+  .sample-row:last-child{border-bottom:none;}
+  .sample-row .name{color:var(--ink-soft);}
+  .sample-row .val{font-family:'JetBrains Mono',monospace;font-weight:600;}
+  .tag{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+    padding:2px 8px;border-radius:4px;
+  }
+  .tag.optimal{background:#E3EEE3;color:var(--optimal);}
+  .tag.deficit{background:var(--clay-soft);color:var(--deficit);}
+  .tag.excess{background:#F3DEDE;color:var(--excess);}
+
+  /* === SECTION shared === */
+  section{padding:88px 0;}
+  .section-head{max-width:620px;margin-bottom:56px;}
+  .section-head .eyebrow{margin-bottom:16px;}
+  .section-head h2{font-size:36px;margin-bottom:14px;}
+  .section-head p{color:var(--ink-soft);font-size:17px;}
+
+  /* === PROBLEM === */
+  .problem{background:var(--paper-warm);border-bottom:1px solid var(--line);}
+  .problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .problem-cell{background:var(--paper);padding:32px;}
+  .problem-cell .num{font-family:'JetBrains Mono',monospace;color:var(--clay);font-size:13px;margin-bottom:14px;}
+  .problem-cell h3{font-size:19px;margin-bottom:10px;font-weight:600;}
+  .problem-cell p{color:var(--ink-soft);font-size:15px;}
+
+  /* === CALCULATOR === */
+  .calc-wrap{
+    display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;
+  }
+  .form-card{
+    background:var(--paper-warm);border:1px solid var(--line);border-radius:12px;padding:32px;
+  }
+  .form-card h3{font-size:20px;margin-bottom:6px;}
+  .form-card .sub{color:var(--ink-soft);font-size:14px;margin-bottom:24px;}
+  .field-group{margin-bottom:20px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  label{
+    display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;
+    font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.03em;
+  }
+  input[type=number], input[type=text], select{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);font-family:'Inter',sans-serif;font-size:15px;color:var(--ink);
+    transition:border-color 0.15s;
+  }
+  input:focus, select:focus{outline:none;border-color:var(--soil-green);}
+  .unit-suffix{position:relative;}
+  .unit-suffix span{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);
+    pointer-events:none;
+  }
+  .divider-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--soil-green-dark);
+    margin:28px 0 16px;padding-top:20px;border-top:1px solid var(--line);
+  }
+  .calc-btn{
+    width:100%;background:var(--soil-green);color:var(--paper);
+    padding:15px;border-radius:6px;border:none;font-weight:700;font-size:15px;
+    cursor:pointer;margin-top:24px;transition:background 0.2s;
+    font-family:'Inter',sans-serif;
+  }
+  .calc-btn:hover{background:var(--soil-green-dark);}
+
+  /* Results bulletin */
+  .bulletin{
+    background:var(--paper);border:1px solid var(--ink);border-radius:12px;
+    padding:0;overflow:hidden;
+    position:sticky;top:96px;
+  }
+  .bulletin-head{
+    background:var(--ink);color:var(--paper);padding:20px 28px;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .bulletin-head .title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .bulletin-head .date{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:0.7;}
+  .bulletin-body{padding:28px;}
+  .bulletin-empty{
+    padding:60px 28px;text-align:center;color:var(--ink-soft);
+  }
+  .bulletin-empty .icon{font-size:32px;margin-bottom:16px;display:block;}
+  .nutrient-row{
+    display:grid;grid-template-columns:90px 1fr 90px 70px;gap:12px;align-items:center;
+    padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .nutrient-row:last-child{border-bottom:none;}
+  .nutrient-row .nname{font-weight:600;font-size:14px;}
+  .nutrient-row .nbar-track{
+    height:8px;background:var(--paper-warm);border-radius:4px;position:relative;overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .nutrient-row .nbar-fill{height:100%;border-radius:4px;}
+  .nutrient-row .ndose{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;text-align:right;}
+  .recommendation-summary{
+    background:var(--paper-warm);border-radius:8px;padding:18px 20px;margin-top:20px;
+    border-left:3px solid var(--soil-green);
+  }
+  .recommendation-summary p{font-size:14px;color:var(--ink-soft);}
+  .recommendation-summary p + p{margin-top:8px;}
+  .alert-ph{
+    background:var(--clay-soft);border-radius:8px;padding:14px 18px;margin-top:14px;
+    border-left:3px solid var(--clay);font-size:13.5px;color:var(--soil-green-dark);
+  }
+  .export-row{display:flex;gap:12px;margin-top:24px;}
+  .export-btn{
+    flex:1;text-align:center;padding:12px;border-radius:6px;font-size:14px;font-weight:600;
+    border:1px solid var(--ink);cursor:pointer;background:transparent;font-family:'Inter',sans-serif;
+  }
+  .export-btn.primary{background:var(--ink);color:var(--paper);}
+  .export-btn:hover{opacity:0.85;}
+
+  /* === ARCHITECTURE SECTION === */
+  .arch{background:var(--paper-warm);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .arch-flow{
+    display:flex;align-items:stretch;gap:0;margin-bottom:40px;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .arch-stage{
+    flex:1;background:var(--paper);padding:24px 20px;position:relative;
+    border-right:1px solid var(--line);
+  }
+  .arch-stage:last-child{border-right:none;}
+  .arch-stage .stage-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soil-green-dark);
+    text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;
+  }
+  .arch-stage h4{font-size:15px;font-weight:700;margin-bottom:8px;}
+  .arch-stage p{font-size:13px;color:var(--ink-soft);}
+  .arch-stage::after{
+    content:'→';position:absolute;right:-13px;top:50%;transform:translateY(-50%);
+    color:var(--soil-green);font-size:18px;font-weight:700;z-index:2;
+  }
+  .arch-stage:last-child::after{content:none;}
+
+  .roadmap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;}
+  .roadmap-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:24px;
+  }
+  .roadmap-card .phase{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--clay);margin-bottom:8px;
+    text-transform:uppercase;letter-spacing:0.05em;
+  }
+  .roadmap-card h4{font-size:17px;margin-bottom:12px;}
+  .roadmap-card ul{list-style:none;font-size:13.5px;color:var(--ink-soft);}
+  .roadmap-card li{padding:5px 0;padding-left:18px;position:relative;}
+  .roadmap-card li::before{content:'·';position:absolute;left:4px;color:var(--soil-green);font-weight:700;}
+
+  /* === FOOTER === */
+  footer{padding:48px 0;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+  footer .mono{color:var(--data-blue);}
+
+  @media (max-width:880px){
+    .hero-grid, .calc-wrap{grid-template-columns:1fr;}
+    .hero h1{font-size:38px;}
+    .problem-grid{grid-template-columns:1fr;}
+    .arch-flow{flex-direction:column;}
+    .arch-stage::after{content:'↓';right:50%;top:auto;bottom:-13px;transform:translateX(50%);}
+    .roadmap{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+    .bulletin{position:static;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo"><span class="mark">SP</span>SPTagro</div>
+    <div class="nav-links">
+      <a href="#problema">Problema</a>
+      <a href="#calculator">Calculator</a>
+      <a href="#arhitectura">Arhitectură</a>
+    </div>
+    <a href="#calculator" class="nav-cta">Testează prototipul</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="grid-texture"></div>
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Prototip · Lucrare de licență · Agrochimie</div>
+        <h1>Solul îți spune <em>ce</em> are nevoie.<br>SPTagro îți spune <em>cât</em> și <em>cum</em>.</h1>
+        <p class="lead">Platformă care transformă buletinele de analiză agrochimică a solului în planuri de fertilizare personalizate — în câteva secunde, nu în câteva zile.</p>
+        <div class="hero-actions">
+          <a href="#calculator" class="btn-primary">Generează o recomandare →</a>
+          <a href="#problema" class="btn-secondary">De ce e nevoie de asta</a>
+        </div>
+      </div>
+      <div class="sample-card">
+        <div class="label"><span>Buletin · Grâu de toamnă</span><span>4.5 t/ha</span></div>
+        <div class="sample-row"><span class="name">pH sol</span><span class="val">5.6</span><span class="tag deficit">acid</span></div>
+        <div class="sample-row"><span class="name">Azot (N)</span><span class="val">12 mg/kg</span><span class="tag deficit">deficit</span></div>
+        <div class="sample-row"><span class="name">Fosfor (P)</span><span class="val">18 mg/kg</span><span class="tag optimal">optim</span></div>
+        <div class="sample-row"><span class="name">Potasiu (K)</span><span class="val">95 mg/kg</span><span class="tag optimal">optim</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="problem" id="problema">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Problema</div>
+      <h2>Fermierii au datele. Le lipsește interpretarea.</h2>
+      <p>Analiza de sol e doar prima jumătate a deciziei. Transformarea ei într-o doză corectă de fertilizant cere cunoștințe agrochimice pe care puțini fermieri le au la îndemână rapid și ieftin.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-cell">
+        <div class="num">01</div>
+        <h3>Lent</h3>
+        <p>Interpretarea unui buletin de analiză prin consultanți durează zile sau săptămâni — exact perioada critică pentru decizia de fertilizare.</p>
+      </div>
+      <div class="problem-cell">
+        <div class="num">02</div>
+        <h3>Costisitor</h3>
+        <p>Consultanța agronomică individuală sau dependența de recomandările distribuitorilor de fertilizanți duce frecvent la dozaje supradimensionate.</p>
+      </div>
+      <div class="problem-cell">
+        <div class="num">03</div>
+        <h3>Greu de scalat</h3>
+        <p>Un agronom poate interpreta manual un număr limitat de buletine pe zi. Fermele mici și mijlocii rămân adesea fără sprijin personalizat.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="calculator">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Prototip funcțional</div>
+      <h2>Calculator de fertilizare</h2>
+      <p>Introdu rezultatele analizei de sol și ținta de producție. Algoritmul calculează necesarul de NPK pe baza unui bilanț agrochimic: <span class="mono">cerința culturii − aportul solului, corectat cu eficiența fertilizării</span>.</p>
+    </div>
+
+    <div class="calc-wrap">
+      <div class="form-card">
+        <h3>Date de intrare</h3>
+        <div class="sub">Exemplu pre-completat: grâu de toamnă, sol cu reacție moderat acidă</div>
+
+        <div class="field-group">
+          <label>Cultură</label>
+          <select id="crop">
+            <option value="wheat" selected>Grâu de toamnă</option>
+            <option value="corn">Porumb</option>
+            <option value="sunflower">Floarea-soarelui</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Ținta de producție</label>
+          <div class="unit-suffix">
+            <input type="number" id="yieldTarget" value="4.5" step="0.1">
+            <span>t/ha</span>
+          </div>
+        </div>
+
+        <div class="divider-label">Rezultate analiză sol</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>pH sol</label>
+            <input type="number" id="soilPh" value="5.6" step="0.1">
+          </div>
+          <div class="field-group">
+            <label>Materie organică</label>
+            <div class="unit-suffix">
+              <input type="number" id="organicMatter" value="2.1" step="0.1">
+              <span>%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Azot mineral (N)</label>
+          <div class="unit-suffix">
+            <input type="number" id="soilN" value="12" step="1">
+            <span>mg/kg</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Fosfor mobil (P)</label>
+          <div class="unit-suffix">
+            <input type="number" id="soilP" value="18" step="1">
+            <span>mg/kg (Egner-Riehm)</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Potasiu mobil (K)</label>
+          <div class="unit-suffix">
+            <input type="number" id="soilK" value="95" step="1">
+            <span>mg/kg</span>
+          </div>
+        </div>
+
+        <button class="calc-btn" onclick="calculateFertilization()">Generează recomandarea →</button>
+      </div>
+
+      <div class="bulletin" id="bulletinCard">
+        <div class="bulletin-head">
+          <span class="title">Buletin de recomandare</span>
+          <span class="date mono" id="bulletinDate">—</span>
+        </div>
+        <div class="bulletin-empty" id="bulletinEmpty">
+          <span class="icon">⌬</span>
+          Completează datele și apasă „Generează recomandarea" pentru a vedea planul de fertilizare.
+        </div>
+        <div class="bulletin-body" id="bulletinBody" style="display:none;">
+          <div id="nutrientRows"></div>
+          <div class="recommendation-summary" id="summaryBox"></div>
+          <div class="alert-ph" id="phAlert" style="display:none;"></div>
+          <div class="export-row">
+            <button class="export-btn primary" onclick="window.print()">Exportă PDF</button>
+            <button class="export-btn" onclick="resetCalc()">Resetează</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="arch" id="arhitectura">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Arhitectură tehnică viitoare</div>
+      <h2>Cum va funcționa SPTagro la scară</h2>
+      <p>Prototipul de mai sus rulează calculul direct în browser. Versiunea de producție va separa interfața de motorul agrochimic, pentru a permite actualizarea independentă a metodologiei științifice.</p>
+    </div>
+
+    <div class="arch-flow">
+      <div class="arch-stage">
+        <div class="stage-label">Client</div>
+        <h4>Web & Mobile App</h4>
+        <p>React / React Native. Fermierul introduce sau încarcă buletinul de analiză (PDF/foto).</p>
+      </div>
+      <div class="arch-stage">
+        <div class="stage-label">API</div>
+        <h4>Backend de aplicație</h4>
+        <p>Node.js / FastAPI. Gestionează conturi, ferme, parcele, istoric de analize.</p>
+      </div>
+      <div class="arch-stage">
+        <div class="stage-label">Motor</div>
+        <h4>Engine agrochimic</h4>
+        <p>Modul separat cu formulele de bilanț NPK, validat și citabil științific, versionat independent.</p>
+      </div>
+      <div class="arch-stage">
+        <div class="stage-label">Date</div>
+        <h4>Bază de date + rapoarte</h4>
+        <p>PostgreSQL pentru date structurate. Generare PDF profesională a planului de fertilizare.</p>
+      </div>
+    </div>
+
+    <div class="roadmap">
+      <div class="roadmap-card">
+        <div class="phase">Acum — Licență</div>
+        <h4>MVP cu calcul manual</h4>
+        <ul>
+          <li>Introducere manuală a datelor de sol</li>
+          <li>Calcul agrochimic validat științific</li>
+          <li>Export raport PDF</li>
+          <li>1–2 culturi (grâu, porumb)</li>
+        </ul>
+      </div>
+      <div class="roadmap-card">
+        <div class="phase">6–12 luni</div>
+        <h4>Produs real, primii utilizatori</h4>
+        <ul>
+          <li>Conturi, ferme și parcele multiple</li>
+          <li>Extracție automată din PDF-uri de laborator</li>
+          <li>Bibliotecă extinsă de culturi</li>
+          <li>Testare cu fermieri reali</li>
+        </ul>
+      </div>
+      <div class="roadmap-card">
+        <div class="phase">12+ luni</div>
+        <h4>Scalare & AI</h4>
+        <ul>
+          <li>Interpretare AI a buletinelor scanate</li>
+          <li>Integrare imagini satelitare</li>
+          <li>Hărți de fertilizare variabilă</li>
+          <li>Chatbot agronomic, marketplace</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    SPTagro — Prototip dezvoltat de Răzvan Spătariu · <span class="mono">Lucrare de licență, Agrochimie</span>
+  </div>
+</footer>
+
+<script>
+// ===== Agronomic coefficients (standard reference values) =====
+const cropCoefficients = {
+  wheat:     { name: "Grâu de toamnă", N: 27, P2O5: 12, K2O: 22, label: "boabe" },
+  corn:      { name: "Porumb",         N: 24, P2O5: 11, K2O: 26, label: "boabe" },
+  sunflower: { name: "Floarea-soarelui", N: 55, P2O5: 22, K2O: 90, label: "semințe" }
+};
+
+// Soil supply conversion factors (simplified: mg/kg -> kg/ha available, surface 0-20cm, bulk density ~1.3)
+// Conversion: mg/kg * 2.6 ≈ kg/ha in plough layer; then multiply by an availability coefficient
+function soilSupply(mgPerKg, availabilityCoef) {
+  return mgPerKg * 2.6 * availabilityCoef;
+}
+
+const fertilizerEfficiency = { N: 0.65, P2O5: 0.35, K2O: 0.55 }; // % of applied dose actually used by crop
+const soilAvailability = { N: 0.5, P: 0.6, K: 0.5 };
+
+function calculateFertilization() {
+  const crop = document.getElementById('crop').value;
+  const cropData = cropCoefficients[crop];
+  const yieldTarget = parseFloat(document.getElementById('yieldTarget').value) || 0;
+  const ph = parseFloat(document.getElementById('soilPh').value) || 7;
+  const organicMatter = parseFloat(document.getElementById('organicMatter').value) || 0;
+  const soilN = parseFloat(document.getElementById('soilN').value) || 0;
+  const soilP = parseFloat(document.getElementById('soilP').value) || 0;
+  const soilK = parseFloat(document.getElementById('soilK').value) || 0;
+
+  // 1. Total crop requirement (kg/ha)
+  const reqN = cropData.N * yieldTarget;
+  const reqP = cropData.P2O5 * yieldTarget;
+  const reqK = cropData.K2O * yieldTarget;
+
+  // 2. Soil supply (kg/ha available)
+  const supplyN = soilSupply(soilN, soilAvailability.N) + (organicMatter * 8); // organic matter contributes mineralized N
+  const supplyP = soilSupply(soilP, soilAvailability.P);
+  const supplyK = soilSupply(soilK, soilAvailability.K);
+
+  // 3. Deficit (can't be negative)
+  const deficitN = Math.max(reqN - supplyN, 0);
+  const deficitP = Math.max(reqP - supplyP, 0);
+  const deficitK = Math.max(reqK - supplyK, 0);
+
+  // 4. Actual dose needed accounting for fertilizer efficiency
+  const doseN = deficitN / fertilizerEfficiency.N;
+  const doseP = deficitP / fertilizerEfficiency.P2O5;
+  const doseK = deficitK / fertilizerEfficiency.K2O;
+
+  renderBulletin({
+    cropName: cropData.name,
+    yieldTarget, ph,
+    nutrients: [
+      { key:'N', label:'Azot (N)', dose: doseN, status: statusFor(soilN,'N'), max: Math.max(reqN,1) },
+      { key:'P2O5', label:'Fosfor (P₂O₅)', dose: doseP, status: statusFor(soilP,'P'), max: Math.max(reqP,1) },
+      { key:'K2O', label:'Potasiu (K₂O)', dose: doseK, status: statusFor(soilK,'K'), max: Math.max(reqK,1) },
+    ]
+  });
+}
+
+function statusFor(value, nutrient) {
+  const thresholds = {
+    N: { low: 15, high: 30 },
+    P: { low: 15, high: 36 },
+    K: { low: 80, high: 160 }
+  };
+  const t = thresholds[nutrient];
+  if (value < t.low) return 'deficit';
+  if (value > t.high) return 'excess';
+  return 'optimal';
+}
+
+function renderBulletin(data) {
+  document.getElementById('bulletinEmpty').style.display = 'none';
+  document.getElementById('bulletinBody').style.display = 'block';
+  document.getElementById('bulletinDate').textContent = new Date().toLocaleDateString('ro-RO');
+
+  const rowsHtml = data.nutrients.map(n => {
+    const pct = Math.min((n.dose / n.max) * 140, 100);
+    const colorMap = { optimal: 'var(--optimal)', deficit: 'var(--deficit)', excess: 'var(--excess)' };
+    const tagMap = { optimal: 'optim în sol', deficit: 'deficit în sol', excess: 'exces în sol' };
+    return `
+      <div class="nutrient-row">
+        <div class="nname">${n.label}</div>
+        <div class="nbar-track"><div class="nbar-fill" style="width:${pct}%;background:${colorMap[n.status]}"></div></div>
+        <div><span class="tag ${n.status}">${tagMap[n.status]}</span></div>
+        <div class="ndose">${n.dose.toFixed(0)} kg/ha</div>
+      </div>`;
+  }).join('');
+  document.getElementById('nutrientRows').innerHTML = rowsHtml;
+
+  const totalN = data.nutrients[0].dose.toFixed(0);
+  const totalP = data.nutrients[1].dose.toFixed(0);
+  const totalK = data.nutrients[2].dose.toFixed(0);
+
+  document.getElementById('summaryBox').innerHTML = `
+    <p><strong>Recomandare pentru ${data.cropName}</strong>, țintă ${data.yieldTarget} t/ha:</p>
+    <p>Aplică <strong>${totalN} kg N/ha</strong>, <strong>${totalP} kg P₂O₅/ha</strong> și <strong>${totalK} kg K₂O/ha</strong>, fracționat: 60% bază (toamnă) + 40% fazial (primăvară) pentru azot.</p>
+  `;
+
+  const phAlert = document.getElementById('phAlert');
+  if (data.ph < 6.0) {
+    phAlert.style.display = 'block';
+    phAlert.innerHTML = `<strong>⚠ pH acid (${data.ph}).</strong> Se recomandă amendare calcică înainte de aplicarea fosforului — în sol acid, P se blochează și eficiența fertilizării scade semnificativ.`;
+  } else {
+    phAlert.style.display = 'none';
+  }
+}
+
+function resetCalc() {
+  document.getElementById('bulletinEmpty').style.display = 'block';
+  document.getElementById('bulletinBody').style.display = 'none';
+}
+
+// Auto-run on load with the pre-filled example
+window.addEventListener('DOMContentLoaded', calculateFertilization);
+</script>
+
+</body>
+</html>
