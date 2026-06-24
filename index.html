@@ -250,42 +250,6 @@
   .export-btn.primary{background:var(--ink);color:var(--paper);}
   .export-btn:hover{opacity:0.85;}
 
-  /* === ARCHITECTURE SECTION === */
-  .arch{background:var(--paper-warm);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-  .arch-flow{
-    display:flex;align-items:stretch;gap:0;margin-bottom:40px;border-radius:12px;overflow:hidden;
-    border:1px solid var(--line);
-  }
-  .arch-stage{
-    flex:1;background:var(--paper);padding:24px 20px;position:relative;
-    border-right:1px solid var(--line);
-  }
-  .arch-stage:last-child{border-right:none;}
-  .arch-stage .stage-label{
-    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--soil-green-dark);
-    text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;
-  }
-  .arch-stage h4{font-size:15px;font-weight:700;margin-bottom:8px;}
-  .arch-stage p{font-size:13px;color:var(--ink-soft);}
-  .arch-stage::after{
-    content:'→';position:absolute;right:-13px;top:50%;transform:translateY(-50%);
-    color:var(--soil-green);font-size:18px;font-weight:700;z-index:2;
-  }
-  .arch-stage:last-child::after{content:none;}
-
-  .roadmap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;}
-  .roadmap-card{
-    background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:24px;
-  }
-  .roadmap-card .phase{
-    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--clay);margin-bottom:8px;
-    text-transform:uppercase;letter-spacing:0.05em;
-  }
-  .roadmap-card h4{font-size:17px;margin-bottom:12px;}
-  .roadmap-card ul{list-style:none;font-size:13.5px;color:var(--ink-soft);}
-  .roadmap-card li{padding:5px 0;padding-left:18px;position:relative;}
-  .roadmap-card li::before{content:'·';position:absolute;left:4px;color:var(--soil-green);font-weight:700;}
-
   /* === FOOTER === */
   footer{padding:48px 0;text-align:center;color:var(--ink-soft);font-size:13.5px;}
   footer .mono{color:var(--data-blue);}
@@ -294,9 +258,6 @@
     .hero-grid, .calc-wrap{grid-template-columns:1fr;}
     .hero h1{font-size:38px;}
     .problem-grid{grid-template-columns:1fr;}
-    .arch-flow{flex-direction:column;}
-    .arch-stage::after{content:'↓';right:50%;top:auto;bottom:-13px;transform:translateX(50%);}
-    .roadmap{grid-template-columns:1fr;}
     .nav-links{display:none;}
     .bulletin{position:static;}
   }
@@ -310,7 +271,6 @@
     <div class="nav-links">
       <a href="#problema">Problema</a>
       <a href="#calculator">Calculator</a>
-      <a href="#arhitectura">Arhitectură</a>
     </div>
     <a href="#calculator" class="nav-cta">Testează prototipul</a>
   </div>
@@ -458,72 +418,6 @@
             <button class="export-btn" onclick="resetCalc()">Resetează</button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="arch" id="arhitectura">
-  <div class="container">
-    <div class="section-head">
-      <div class="eyebrow">Arhitectură tehnică viitoare</div>
-      <h2>Cum va funcționa SPTagro la scară</h2>
-      <p>Prototipul de mai sus rulează calculul direct în browser. Versiunea de producție va separa interfața de motorul agrochimic, pentru a permite actualizarea independentă a metodologiei științifice.</p>
-    </div>
-
-    <div class="arch-flow">
-      <div class="arch-stage">
-        <div class="stage-label">Client</div>
-        <h4>Web & Mobile App</h4>
-        <p>React / React Native. Fermierul introduce sau încarcă buletinul de analiză (PDF/foto).</p>
-      </div>
-      <div class="arch-stage">
-        <div class="stage-label">API</div>
-        <h4>Backend de aplicație</h4>
-        <p>Node.js / FastAPI. Gestionează conturi, ferme, parcele, istoric de analize.</p>
-      </div>
-      <div class="arch-stage">
-        <div class="stage-label">Motor</div>
-        <h4>Engine agrochimic</h4>
-        <p>Modul separat cu formulele de bilanț NPK, validat și citabil științific, versionat independent.</p>
-      </div>
-      <div class="arch-stage">
-        <div class="stage-label">Date</div>
-        <h4>Bază de date + rapoarte</h4>
-        <p>PostgreSQL pentru date structurate. Generare PDF profesională a planului de fertilizare.</p>
-      </div>
-    </div>
-
-    <div class="roadmap">
-      <div class="roadmap-card">
-        <div class="phase">Acum — Licență</div>
-        <h4>MVP cu calcul manual</h4>
-        <ul>
-          <li>Introducere manuală a datelor de sol</li>
-          <li>Calcul agrochimic validat științific</li>
-          <li>Export raport PDF</li>
-          <li>1–2 culturi (grâu, porumb)</li>
-        </ul>
-      </div>
-      <div class="roadmap-card">
-        <div class="phase">6–12 luni</div>
-        <h4>Produs real, primii utilizatori</h4>
-        <ul>
-          <li>Conturi, ferme și parcele multiple</li>
-          <li>Extracție automată din PDF-uri de laborator</li>
-          <li>Bibliotecă extinsă de culturi</li>
-          <li>Testare cu fermieri reali</li>
-        </ul>
-      </div>
-      <div class="roadmap-card">
-        <div class="phase">12+ luni</div>
-        <h4>Scalare & AI</h4>
-        <ul>
-          <li>Interpretare AI a buletinelor scanate</li>
-          <li>Integrare imagini satelitare</li>
-          <li>Hărți de fertilizare variabilă</li>
-          <li>Chatbot agronomic, marketplace</li>
-        </ul>
       </div>
     </div>
   </div>
